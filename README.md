@@ -27,7 +27,7 @@ goenv ls
 eval $(goenv activate env1)
 ```
 
-or (see to [Database](#Database) section)
+or (see to [Database](#database) section)
 
 ```bash
 source $(goenv db)/env1/activate
@@ -35,7 +35,7 @@ source $(goenv db)/env1/activate
 
 ### Remove repository:
 
-Move to trash directory (`DB_DIR/.trash`, see to [Database](#Database) section):
+Move to trash directory (`DB_DIR/.trash`, see to [Database](#database) section):
 ```bash
 goenv rm env1
 ```
