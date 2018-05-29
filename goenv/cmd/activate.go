@@ -16,7 +16,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/moisespsena/goenv"
+	"github.com/moisespsena/go-goenv"
 )
 
 // activateCmd represents the activate command
@@ -25,12 +25,12 @@ var activateCmd = &cobra.Command{
 	Short: "Activate the virtualenv with NAME.",
 	Long: `Activate the virtualenv with NAME.
 Examples:
-  $ eval $(goenv activate teste)
-  $ eval $(goenv -d ~/my-goenv activate teste)
+  $ eval $(go-goenv activate teste)
+  $ eval $(go-goenv -d ~/my-go-goenv activate teste)
 `,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		env, err := goenv.NewGoEnvCmd(db, true)
+		env, err := go_goenv.NewGoEnvCmd(db, true)
 		if err != nil {
 			return err
 		}

@@ -16,7 +16,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/moisespsena/goenv"
+	"github.com/moisespsena/go-goenv"
 )
 
 // lsCmd represents the ls command
@@ -26,16 +26,16 @@ var lsCmd = &cobra.Command{
 	Long: `List all virtual enviroments on current database.
 
 Examples:
-  $ goenv ls
+  $ go-goenv ls
   env1
   env2
 
-  $ goenv -d ~/my-goenv ls
+  $ go-goenv -d ~/my-go-goenv ls
   env3
   env4
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		env, err := goenv.NewGoEnvCmd(db, true)
+		env, err := go_goenv.NewGoEnvCmd(db, true)
 		if err != nil {
 			return err
 		}

@@ -16,7 +16,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/moisespsena/goenv"
+	"github.com/moisespsena/go-goenv"
 )
 
 // rmCmd represents the rm command
@@ -25,11 +25,11 @@ var rmCmd = &cobra.Command{
 	Short: "Remove the virtualenv with have NAME.",
 	Long: `Remove the virtualenv with have NAME.
 Examples:
-  $ goenv rm teste
+  $ go-goenv rm teste
 `,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		env, err := goenv.NewGoEnvCmd(db, true)
+		env, err := go_goenv.NewGoEnvCmd(db, true)
 		if err != nil {
 			return err
 		}

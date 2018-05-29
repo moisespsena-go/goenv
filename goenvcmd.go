@@ -1,4 +1,4 @@
-package goenv
+package go_goenv
 
 import (
 	"fmt"
