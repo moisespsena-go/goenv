@@ -33,6 +33,12 @@ or (see to [Database](#database) section)
 source $(goenv db)/env1/activate
 ```
 
+#### Deactivate it
+
+```bash
+deactivate
+```
+
 ### Remove repository:
 
 Move to trash directory (`DB_DIR/.trash`, see to [Database](#database) section):

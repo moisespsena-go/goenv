@@ -108,11 +108,15 @@ const activateData = `
 export GOPATH="$(cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd)"
 export OLDPS1=$PS1
 export PS1="[go:$(basename $GOPATH)] $PS1"
+export OLDPATH="$PATH"
+export PATH="$GOPATH/bin:$PATH"
 alias gcd="cd $GOPATH"
 deactivate() {
 	export PS1=$OLDPS1
+	export PATH=$OLDPATH
 	unset GOPATH
 	unset OLDPS1
+	unset OLDPATH
 	unalias gcd
 	unset deactivate
 }
