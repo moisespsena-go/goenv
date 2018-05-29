@@ -16,14 +16,12 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"os"
-	"path/filepath"
-	"fmt"
+	"github.com/moisespsena/goenv"
 )
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
-	Use:   "init NAME [NAME ...]",
+	Use:   "init NAME...",
 	Short: "Init new virtual enviroment.",
 	Long: `Init new virtual enviroment on current database.
 
@@ -31,48 +29,17 @@ Examples:
   $ goenv init env1 env2
   $ goenv -d ~/my-goenv init env3 env4
 `,
-	Args:cobra.MinimumNArgs(1),
+	Args: cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return nil
 		}
-		ok, err := IsDir(db)
+		env, err := goenv.NewGoEnvCmd(db, false)
 		if err != nil {
 			return err
 		}
 
-		defer func() {
-			os.Stdout.Sync()
-			os.Stderr.Sync()
-		}()
-
-		for _, name := range args {
-			pth := filepath.Join(db, name)
-			fmt.Fprintf(os.Stdout, "Initializing virtual enviroment %q on %q...\n", name, pth)
-			ok, err = IsDir(pth, "src")
-			if err != nil {
-				return err
-			}
-			if !ok {
-				err = MkdirAll(pth, "src")
-				if err != nil {
-					return err
-				}
-			}
-			err = MkdirAll(pth, "bin")
-			if err != nil {
-				return err
-			}
-
-			err = createActivate(pth)
-			if err != nil {
-				return err
-			}
-			fmt.Fprintf(os.Stdout, "Activate it using:\n  $ source '%v'\n    or\n  $ eval $(%v activate %v)\n\n",
-				filepath.Join(pth, "activate"), os.Args[0], name)
-		}
-		fmt.Fprintln(os.Stdout, "done")
-		return nil
+		return env.Init(args[0])
 	},
 }
 

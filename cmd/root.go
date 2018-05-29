@@ -52,5 +52,9 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&db, "db", "d", "~/.goenv", "Database directory (default is $HOME/.goenv)")
+	defaultDb := os.Getenv("GOENVDB")
+	if defaultDb == "" {
+		defaultDb = "~/.goenv"
+	}
+	rootCmd.PersistentFlags().StringVarP(&db, "db", "d", defaultDb, "Database directory (default is $HOME/.goenv)")
 }

@@ -16,41 +16,32 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"os"
-	"fmt"
-	"path/filepath"
+	"github.com/moisespsena/goenv"
 )
 
-// activateCmd represents the activate command
-var activateCmd = &cobra.Command{
-	Use:   "activate NAME",
-	Short: "Activate the virtualenv with NAME.",
-	Long: `Activate the virtualenv with NAME.
+// rmCmd represents the rm command
+var rmCmd = &cobra.Command{
+	Use:   "rm NAME",
+	Short: "Remove the virtualenv with have NAME.",
+	Long: `Remove the virtualenv with have NAME.
 Examples:
-  $ eval $(goenv activate teste)
-  $ eval $(goenv -d ~/my-goenv activate teste)
+  $ goenv rm teste
 `,
-	Args:cobra.ExactArgs(1),
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ok, err := IsDir(db, args[0])
+		env, err := goenv.NewGoEnvCmd(db, true)
 		if err != nil {
 			return err
 		}
-		if !ok {
-			fmt.Fprintf(os.Stderr, "'%v': Database isn't initialized.\n", db)
-			return nil
+		permanent, err := cmd.PersistentFlags().GetBool("permanent")
+		if err != nil {
+			return err
 		}
-		defer func() {
-			os.Stdout.Sync()
-			os.Stderr.Sync()
-		}()
-
-		fmt.Fprintf(os.Stdout, "source %q\ns=$?\n[ $s -ne 0 ]",
-			filepath.Join(db, args[0], "activate"))
-		return nil
+		return env.Rm(args[0], permanent)
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(activateCmd)
+	rmCmd.PersistentFlags().BoolP("permanent", "p", false, "Remove permanently.")
+	rootCmd.AddCommand(rmCmd)
 }

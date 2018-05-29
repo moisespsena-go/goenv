@@ -15,12 +15,8 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
-	"io/ioutil"
-	"os"
-	"path/filepath"
+	"github.com/moisespsena/goenv"
 )
 
 // lsCmd represents the ls command
@@ -39,35 +35,12 @@ Examples:
   env4
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ok, err := IsDir(db)
+		env, err := goenv.NewGoEnvCmd(db, true)
 		if err != nil {
 			return err
 		}
-		if !ok {
-			fmt.Fprintf(os.Stderr, "'%v': Database isn't initialized.", db)
-			return nil
-		}
-		defer func() {
-			os.Stdout.Sync()
-			os.Stderr.Sync()
-		}()
 
-		files, err := ioutil.ReadDir(db)
-		if err != nil {
-			return fmt.Errorf("'%v': %v", db, err)
-		}
-		var has bool
-		for _, f := range files {
-			if f.IsDir() {
-				has = true
-				fmt.Fprintf(os.Stdout, filepath.Join(db, f.Name()))
-			}
-		}
-
-		if !has {
-			fmt.Fprintf(os.Stderr, "'%v': Database directory is empty.", db)
-		}
-		return nil
+		return env.Ls()
 	},
 }
 

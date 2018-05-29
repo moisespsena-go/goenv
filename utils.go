@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package goenv
 
 import (
 	"path/filepath"
@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/phayes/permbits"
 	"io/ioutil"
+	"time"
 )
 
 func IsDir(pth ...string) (bool, error) {
@@ -32,7 +33,22 @@ func IsDir(pth ...string) (bool, error) {
 		return false, fmt.Errorf("'%v': %v", p, err)
 	}
 	if !s.IsDir() {
-		return false, fmt.Errorf("'%v': Isn't a directory.", p)
+		return false, fmt.Errorf("'%v': Isn't directory.", p)
+	}
+	return true, nil
+}
+
+func IsFile(pth ...string) (bool, error) {
+	p := filepath.Join(pth...)
+	s, err := os.Stat(p)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, fmt.Errorf("'%v': %v", p, err)
+	}
+	if s.IsDir() {
+		return false, fmt.Errorf("'%v': Is directory.", p)
 	}
 	return true, nil
 }
@@ -42,7 +58,7 @@ func MkdirAll(pth ...string) error {
 	parent := p
 	mode := os.FileMode(0777)
 	var (
-		err error
+		err  error
 		stat os.FileInfo
 	)
 	old := ""
@@ -81,6 +97,11 @@ func createActivate(pth string) error {
 		return fmt.Errorf("Create file %q failed: %v", p, err)
 	}
 	return nil
+}
+
+func TimeString(t time.Time) string {
+	return fmt.Sprintf("%04d%02d%02d%02d%02d%02d%v", t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(),
+		t.Second(), t.Nanosecond())
 }
 
 const activateData = `
