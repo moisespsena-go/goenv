@@ -91,6 +91,37 @@ func (cmd *GoEnvCmd) Init(names ...string) (err error) {
 	return nil
 }
 
+func (cmd *GoEnvCmd) Update(envs []string) error {
+	if len(envs) == 0 {
+		return fmt.Errorf("No enviroments names informed.")
+	}
+	for _, envName := range envs {
+		_, err := cmd.env.GetCheck(envName)
+		if err != nil {
+			return err
+		}
+		err = cmd.env.Init(envName)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (cmd *GoEnvCmd) UpdateAll() error {
+	envs, err := cmd.env.Ls()
+	if err != nil {
+		return err
+	}
+	for _, envName := range envs {
+		err = cmd.env.Init(envName)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (cmd *GoEnvCmd) ActivateCode(name string) error {
 	code, err := cmd.env.ActivateCode(name)
 	if err != nil {

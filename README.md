@@ -44,6 +44,7 @@ Available Commands:
   restore     Restore backup.tar.gz file to the virtualenv with have NAME.
   rm          Remove the virtualenv with have NAME.
   setup       Generate sources for custom prompt commands.
+  update      Update activation scripts.
 
 Flags:
   -d, --db string   Database directory (default is $HOME/.goenv). (default "~/.goenv")
