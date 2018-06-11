@@ -6,6 +6,17 @@ Manage GoLang virtual enviroments.
 ```bash
 go get -u github.com/moisespsena/go-goenv/goenv
 ```
+### Check your $PATH enviroment variable
+
+```bash
+export PATH=$GOPATH/bin:$PATH
+```
+
+### Add shortcut commands
+
+```bash
+goenv setup | tee -a >> ~/.bashrc
+```
 
 ## Usage
 
@@ -18,7 +29,6 @@ goenv -h
 Output:
 
 ```
-goenv -h
 Manage GoLang virtual enviroments.
 
 Usage:
