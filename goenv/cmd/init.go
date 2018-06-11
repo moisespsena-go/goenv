@@ -26,15 +26,15 @@ var initCmd = &cobra.Command{
 	Long: `Init new virtual enviroment on current database.
 
 Examples:
-  $ go-goenv init env1 env2
-  $ go-goenv -d ~/my-go-goenv init env3 env4
+  $ goenv init env1 env2
+  $ goenv -d ~/my-goenv init env3 env4
 `,
 	Args: cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return nil
 		}
-		env, err := go_goenv.NewGoEnvCmd(db, false)
+		env, err := goenv.NewGoEnvCmd(db, false)
 		if err != nil {
 			return err
 		}

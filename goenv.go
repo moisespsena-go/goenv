@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package go_goenv
+package goenv
 
 import (
 	"fmt"
@@ -87,13 +87,13 @@ func (env *GoEnv) ActivateCode(name string) (string, error) {
 		filepath.Join(env.DbDir, name, "activate")), nil
 }
 
-func (env *GoEnv) Rm(name string, delete bool) (string, error) {
-	var (
-		exists bool
-		err error
-	)
-	pth := filepath.Join(env.DbDir, name)
+func (env *GoEnv) GetCheck(name string) (pth string, err error) {
+	var exists bool
+	pth = filepath.Join(env.DbDir, name)
 	exists, err = IsDir(pth)
+	if err != nil {
+		return "", fmt.Errorf("%v: %v", pth, err)
+	}
 	if !exists {
 		return "", fmt.Errorf("%v: %v", pth, os.ErrNotExist)
 	}
@@ -104,6 +104,42 @@ func (env *GoEnv) Rm(name string, delete bool) (string, error) {
 	}
 	if !exists {
 		return "", fmt.Errorf("%v is not GoLang enviroment.", pth)
+	}
+	return
+}
+
+func (env *GoEnv) GetPath(name string, require bool) (pth string, err error) {
+	var exists bool
+	pth = filepath.Join(env.DbDir, name)
+	exists, err = IsDir(pth)
+	if err != nil {
+		return "", fmt.Errorf("%v: %v", pth, err)
+	}
+	if !exists {
+		if require {
+			return "", fmt.Errorf("%v: %v", pth, os.ErrNotExist)
+		}
+		return
+	}
+
+	exists, err = IsFile(pth, "activate")
+	if err != nil {
+		return "", fmt.Errorf("%v: %v", filepath.Join(pth, "activate"), err)
+	}
+	if !exists {
+		if require {
+			return "", fmt.Errorf("%v is not GoLang enviroment.", pth)
+		}
+	}
+	return
+}
+
+func (env *GoEnv) Rm(name string, delete bool) (string, error) {
+	var exists bool
+	pth, err := env.GetCheck(name)
+
+	if err != nil {
+		return "", err
 	}
 
 	if delete {

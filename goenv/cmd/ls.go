@@ -26,16 +26,16 @@ var lsCmd = &cobra.Command{
 	Long: `List all virtual enviroments on current database.
 
 Examples:
-  $ go-goenv ls
+  $ goenv ls
   env1
   env2
 
-  $ go-goenv -d ~/my-go-goenv ls
+  $ goenv -d ~/my-goenv ls
   env3
   env4
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		env, err := go_goenv.NewGoEnvCmd(db, true)
+		env, err := goenv.NewGoEnvCmd(db, true)
 		if err != nil {
 			return err
 		}

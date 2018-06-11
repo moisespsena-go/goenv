@@ -9,6 +9,17 @@ go get -u github.com/moisespsena/go-goenv/goenv
 
 ## Usage
 
+### The help command
+
+```bash
+goenv -h
+```
+
+Output:
+
+```
+```
+
 ### Init new enviroment
 
 ```bash

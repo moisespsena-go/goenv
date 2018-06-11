@@ -1,4 +1,4 @@
-// Copyright © 2018 NAME HERE <EMAIL ADDRESS>
+// Copyright © 2018 Moises P. Sena <moisespsena@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@ var rmCmd = &cobra.Command{
 	Short: "Remove the virtualenv with have NAME.",
 	Long: `Remove the virtualenv with have NAME.
 Examples:
-  $ go-goenv rm teste
+  $ goenv rm teste
 `,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		env, err := go_goenv.NewGoEnvCmd(db, true)
+		env, err := goenv.NewGoEnvCmd(db, true)
 		if err != nil {
 			return err
 		}

@@ -32,12 +32,12 @@ With command paramenter
 
 For use custom database path, set the '-d' flag:
 
-	go-goenv -d ~/custom-db args...
+	goenv -d ~/custom-db args...
 
 Examples:
 
-	go-goenv -d ~/custom-db init env2
-	go-goenv -d ~/custom-db ls
+	goenv -d ~/custom-db init env2
+	goenv -d ~/custom-db ls
 
 With enviroment variable
 -----------------------
@@ -48,7 +48,7 @@ Set the enviroment variable:
 
 or
 
-	GOENVDB=~/custom-db go-goenv args...
+	GOENVDB=~/custom-db goenv args...
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		os.Stdout.WriteString(db + "\n")
