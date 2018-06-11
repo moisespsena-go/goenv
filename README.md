@@ -15,7 +15,7 @@ export PATH=$GOPATH/bin:$PATH
 ### Add shortcut commands
 
 ```bash
-goenv setup | tee -a >> ~/.bashrc
+goenv setup | tee -a ~/.bashrc
 ```
 
 ## Usage
