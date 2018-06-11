@@ -1,0 +1,53 @@
+// Copyright © 2018 Moises P. Sena <moisespsena@gmail.com>
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package cmd
+
+import (
+	"github.com/spf13/cobra"
+	"github.com/moisespsena/go-goenv"
+)
+
+var updateCmd = &cobra.Command{
+	Use:   "update NAME...",
+	Short: "Update activation scripts.",
+	Long: `Update activation scripts.
+Examples:
+  update all scripts:
+  $ goenv update -a
+
+  update just envs:
+  $ goenv update env1 env2
+`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		env, err := goenv.NewGoEnvCmd(db, true)
+		if err != nil {
+			return err
+		}
+		all, err := cmd.PersistentFlags().GetBool("all")
+		if err != nil {
+			return err
+		}
+		if all {
+			return env.UpdateAll()
+		}
+		return env.Update(args)
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(updateCmd)
+	updateCmd.PersistentFlags().BoolP("all", "a", false,
+		"Update all enviroments on database. Ignore names passed on arguments.")
+}
