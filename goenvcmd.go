@@ -32,6 +32,25 @@ func NewGoEnvCmd(dbDir string, check bool) (envCmd *GoEnvCmd, err error) {
 	return &GoEnvCmd{env}, nil
 }
 
+func (cmd *GoEnvCmd) Setup() error {
+	os.Stdout.WriteString(`##############################
+## - BEGIN GOENV COMMANDS - ##
+##############################
+goenv-activate () {
+ eval $(goenv activate $1)
+ return $?
+}
+goenv-die () {
+ unset -f goenv-activate
+ unset -f goenv-die
+}
+##############################
+### - END GOENV COMMANDS - ###
+##############################
+`)
+	return nil
+}
+
 func (cmd *GoEnvCmd) Ls() error {
 	names, err := cmd.env.Ls()
 	if err != nil {

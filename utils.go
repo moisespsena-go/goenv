@@ -111,7 +111,7 @@ export PS1="[go:$(basename $GOPATH)] $PS1"
 export OLDPATH="$PATH"
 export PATH="$GOPATH/bin:$PATH"
 alias gcd="cd $GOPATH"
-deactivate() {
+goenv-deactivate() {
 	export PS1=$OLDPS1
 	export PATH=$OLDPATH
 	unset GOPATH

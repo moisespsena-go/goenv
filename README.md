@@ -18,6 +18,28 @@ goenv -h
 Output:
 
 ```
+goenv -h
+Manage GoLang virtual enviroments.
+
+Usage:
+  goenv [command]
+
+Available Commands:
+  activate    Activate the virtualenv with NAME.
+  backup      Create backup .tar.gz file for the virtualenv with have NAME.
+  db          Returns the current database path.
+  help        Help about any command
+  init        Init new virtual enviroment.
+  ls          List all virtual enviroments on current database.
+  restore     Restore backup.tar.gz file to the virtualenv with have NAME.
+  rm          Remove the virtualenv with have NAME.
+  setup       Generate sources for custom prompt commands.
+
+Flags:
+  -d, --db string   Database directory (default is $HOME/.goenv). (default "~/.goenv")
+  -h, --help        help for goenv
+
+Use "goenv [command] --help" for more information about a command.
 ```
 
 ### Init new enviroment
@@ -47,7 +69,7 @@ source $(goenv db)/env1/activate
 #### Deactivate it
 
 ```bash
-deactivate
+goenv-deactivate
 ```
 
 ### Remove repository:
