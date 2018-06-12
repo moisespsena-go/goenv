@@ -120,7 +120,7 @@ func (env *GoEnvCmd) Restore(options *RestoreOptions) error {
 		return fmt.Errorf("Restore failed: %v", err)
 	}
 	if pth != "" {
-		fmt.Fprintf(os.Stdout, "Restore saved on %q", pth)
+		fmt.Fprintf(os.Stdout, "Restore saved on %q\n", pth)
 	}
 	return nil
 }
