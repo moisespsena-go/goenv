@@ -40,8 +40,13 @@ goenv-activate () {
  eval $(goenv activate $1)
  return $?
 }
+goenv-init () {
+ goenv init "$@"
+ return $?
+}
 goenv-die () {
  unset -f goenv-activate
+ unset -f goenv-init
  unset -f goenv-die
 }
 ##############################
@@ -82,11 +87,18 @@ func (cmd *GoEnvCmd) Init(names ...string) (err error) {
 		if err != nil {
 			return
 		}
-		fmt.Fprintf(os.Stdout, "Activate it using:\n  $ source '%v'\n    or\n  $ eval $(%v activate %v)\n\n",
-			filepath.Join(pth, "activate"), os.Args[0], name)
+		fmt.Fprintf(os.Stdout, `Activate it using:
+  $ goenv-activate ` + name + `
+    or
+  $ source '%v'
+    or
+  $ eval $(%v activate ` + name + `)
+
+`,
+			filepath.Join(pth, "activate"), os.Args[0])
 	}
 
-	fmt.Fprintln(os.Stdout, "done")
+	fmt.Fprintln(os.Stdout, "done.")
 	os.Stdout.Sync()
 	return nil
 }

@@ -33,7 +33,11 @@ Examples:
   $ eval $(goenv setup)
   
 Commands available:
-  - goenv-activate  
+  - goenv-init
+    Example (see for 'init' sub command):
+        $ goenv-init env1
+
+  - goenv-activate
     Example:
         $ goenv-activate env1
 
