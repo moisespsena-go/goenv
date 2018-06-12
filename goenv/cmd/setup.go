@@ -27,9 +27,7 @@ var setupCmd = &cobra.Command{
 Examples:
   $ goenv setup | tee -a ~/.bashrc
   $ source ~/.bashrc
-
-  or
-
+    or
   $ eval $(goenv setup)
   
 Commands available:

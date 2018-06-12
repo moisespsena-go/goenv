@@ -12,10 +12,11 @@ go get -u github.com/moisespsena/go-goenv/goenv
 export PATH=$GOPATH/bin:$PATH
 ```
 
-### Add shortcut commands
+### Add shortcut commands and Auto Completion
 
 ```bash
 goenv setup | tee -a ~/.bashrc
+source ~/.bashrc
 ```
 
 ## Usage

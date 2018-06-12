@@ -49,6 +49,7 @@ goenv-die () {
  unset -f goenv-init
  unset -f goenv-die
 }
+. <(goenv completion)
 ##############################
 ### - END GOENV COMMANDS - ###
 ##############################
