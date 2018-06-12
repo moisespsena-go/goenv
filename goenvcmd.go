@@ -96,7 +96,7 @@ func (cmd *GoEnvCmd) Update(envs []string) error {
 		return fmt.Errorf("No enviroments names informed.")
 	}
 	for _, envName := range envs {
-		_, err := cmd.env.GetCheck(envName)
+		_, err := cmd.env.GetPath(envName, false)
 		if err != nil {
 			return err
 		}

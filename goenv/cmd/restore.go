@@ -82,6 +82,10 @@ Examples:
 		if err != nil {
 			return err
 		}
+		options.Trial, err = cmd.PersistentFlags().GetBool("dry-run")
+		if err != nil {
+			return err
+		}
 
 		return env.Restore(options)
 	},
@@ -96,6 +100,8 @@ func init() {
 		"Archive only. Not compressed with GZip.")
 	restoreCmd.PersistentFlags().BoolP("verbose", "v", false,
 		"Print names while restoring.")
+	restoreCmd.PersistentFlags().BoolP("dry-run", "D", false,
+		"Perform a trial run with no changes made.")
 	restoreCmd.PersistentFlags().StringP("name", "n", "",
 		"Name after restored.")
 	rootCmd.AddCommand(restoreCmd)

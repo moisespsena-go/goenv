@@ -26,6 +26,21 @@ import (
 	"github.com/dustin/go-humanize"
 )
 
+const (
+	Verbose ExtractOptions = 1 << iota
+	Trial
+)
+
+type ExtractOptions int
+
+func (o ExtractOptions) IsVerbose() bool {
+	return (o & Verbose) != 0
+}
+
+func (o ExtractOptions) IsTrial() bool {
+	return (o & Trial) != 0
+}
+
 // The gzip file stores a header giving metadata about the compressed file.
 // That header is exposed as the fields of the Writer and Reader structs.
 type Header struct {
@@ -86,7 +101,7 @@ func compress(source string, writer io.Writer) error {
 
 type BackupFile struct {
 	Reader *tar.Reader
-	first *tar.Header
+	first  *tar.Header
 }
 
 func NewBackupReader(reader io.Reader, archive bool) (bkp *BackupFile, err error) {
@@ -96,7 +111,7 @@ func NewBackupReader(reader io.Reader, archive bool) (bkp *BackupFile, err error
 			return nil, err
 		}
 	}
-	bkp = &BackupFile{Reader:tar.NewReader(reader)}
+	bkp = &BackupFile{Reader: tar.NewReader(reader)}
 	return
 }
 
@@ -112,11 +127,13 @@ func (b *BackupFile) GetRootName() (name string, err error) {
 	if err != nil {
 		return "", err
 	}
-	if !b.first.FileInfo().IsDir() || strings.Contains(b.first.Name, string(os.PathSeparator)) {
-		return "", fmt.Errorf("Invalid root name")
+
+	name = strings.Trim(b.first.Name, string(os.PathSeparator))
+	if !b.first.FileInfo().IsDir() || strings.Contains(name, string(os.PathSeparator)) {
+		return "", fmt.Errorf("Invalid root name %q", name)
 	}
 
-	return b.first.Name, nil
+	return name, nil
 }
 
 func (b *BackupFile) Each(cb func(header *tar.Header, reader *tar.Reader) error) error {
@@ -164,7 +181,7 @@ func (b *BackupFile) EachRoot(rootName string, cb func(header *tar.Header, reade
 	}
 
 	return b.Each(func(header *tar.Header, reader *tar.Reader) error {
-		header.Name = rootName + header.Name[lorn:]
+		header.Name = filepath.Join(rootName, header.Name[lorn:])
 		return cb(header, reader)
 	})
 }
@@ -173,22 +190,49 @@ func pad(v string, count int) string {
 	r := strings.Repeat(" ", count-len(v))
 	return v + r
 }
+func padl(v string, count int) string {
+	r := strings.Repeat(" ", count-len(v))
+	return r + v
+}
 
-func (b *BackupFile) Uncompress(rootName, target string, verbose bool) error {
+var typeDesc = map[byte]string{
+	tar.TypeReg:           "F",
+	tar.TypeRegA:          "Fa",
+	tar.TypeLink:          "L",
+	tar.TypeSymlink:       "S",
+	tar.TypeChar:          "C",
+	tar.TypeBlock:         "B",
+	tar.TypeDir:           "D",
+	tar.TypeFifo:          "FF",
+	tar.TypeCont:          "Cn",
+	tar.TypeXHeader:       "Xh",
+	tar.TypeXGlobalHeader: "XH",
+	tar.TypeGNUSparse:     "gnuS",
+	tar.TypeGNULongName:   "gnuL",
+	tar.TypeGNULongLink:   "gnuK",
+}
+
+func (b *BackupFile) Extract(rootName, target string, options ExtractOptions) error {
 	return b.EachRoot(rootName, func(header *tar.Header, reader *tar.Reader) (err error) {
 		info := header.FileInfo()
-		if verbose {
-			prefix := "F "
-			if info.IsDir() {
-				prefix = "D " + pad("", 12)
-			} else {
-				prefix += pad("[" + humanize.Bytes(uint64(info.Size())) +"]", 12)
+		if options.IsVerbose() {
+			prefix := pad(typeDesc[header.Typeflag], 5) + " "
+			switch header.Typeflag {
+			case tar.TypeReg,tar.TypeRegA:
+				prefix += pad("["+humanize.Bytes(uint64(info.Size()))+"]", 12)
+			default:
+				prefix += pad("", 12)
 			}
-			os.Stdout.WriteString(prefix + header.Name + "... ")
+			name := header.Name
+			switch header.Typeflag {
+			case tar.TypeLink, tar.TypeSymlink:
+				name += " -> " + header.Linkname
+			}
+			os.Stdout.WriteString(prefix + name + "... ")
 		}
 		path := filepath.Join(target, header.Name)
 		if info.IsDir() {
-			if verbose {
+			if options.IsVerbose() {
 				defer func() {
 					if err != nil {
 						os.Stdout.WriteString("failed.\n")
@@ -197,23 +241,32 @@ func (b *BackupFile) Uncompress(rootName, target string, verbose bool) error {
 					}
 				}()
 			}
+			if options.IsTrial() {
+				return nil
+			}
 			if err = os.MkdirAll(path, info.Mode()); err != nil {
 				return err
 			}
 			return nil
 		}
 
+		if options.IsTrial() {
+			os.Stdout.WriteString("done.\n")
+			return
+		}
+
 		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
 		if err != nil {
 			return err
 		}
+
 		defer func() {
 			if err == nil {
 				err = file.Close()
 			} else {
 				file.Close()
 			}
-			if verbose {
+			if options.IsVerbose() {
 				if err != nil {
 					os.Stdout.WriteString("failed.\n")
 				} else {
@@ -222,6 +275,7 @@ func (b *BackupFile) Uncompress(rootName, target string, verbose bool) error {
 			}
 		}()
 		_, err = io.Copy(file, reader)
+
 		return err
 	})
 }

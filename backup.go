@@ -111,6 +111,7 @@ type RestoreOptions struct {
 	Name      string
 	Archive   bool
 	Verbose   bool
+	Trial   bool
 }
 
 func (env *GoEnvCmd) Restore(options *RestoreOptions) error {
@@ -172,13 +173,20 @@ func (env *GoEnv) Restore(options *RestoreOptions) (string, error) {
 	}
 
 	if !exists || (options.Update || options.OverWrite) {
-		if exists && options.OverWrite {
+		if exists && options.OverWrite && !options.Trial {
 			err := os.RemoveAll(pth)
 			if err != nil {
 				return pth, err
 			}
 		}
-		err = bkp.Uncompress(name, env.DbDir, options.Verbose)
+		opts := ExtractOptions(0)
+		if options.Verbose {
+			opts |= Verbose
+		}
+		if options.Trial {
+			opts |= Trial
+		}
+		err = bkp.Extract(name, env.DbDir, opts)
 		if err != nil {
 			return "", err
 		}
