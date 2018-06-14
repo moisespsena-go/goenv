@@ -22,7 +22,7 @@ import (
 
 // restoreCmd represents the restore command
 var restoreCmd = &cobra.Command{
-	Use:   "restore NAME BACKUP.tar.gz",
+	Use:   "restore [FLAG...] FILE",
 	Short: "Restore backup.tar.gz file to the virtualenv with have NAME.",
 	Long: `Restore backup.tar.gz file to the virtualenv with have NAME.
 Examples:
