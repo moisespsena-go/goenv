@@ -35,10 +35,11 @@ func (env *GoEnvCmd) Backup(name string, options *BackupOptions) error {
 		return fmt.Errorf("Backup for %q failed: %v", name, err)
 	}
 	if pth != "" {
-		fmt.Fprintf(os.Stdout, "Backup save on %q", pth)
+		fmt.Fprintf(os.Stdout, "Backup save on %q\n", pth)
 	}
 	return nil
 }
+
 func (env *GoEnv) TempDir() (pth string, err error) {
 	pth = filepath.Join(env.DbDir, ".tmp")
 	exists, err := IsDir(pth)
