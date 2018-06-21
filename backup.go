@@ -15,11 +15,12 @@
 package goenv
 
 import (
+	"fmt"
 	"io"
 	"os"
-	"fmt"
-	"time"
 	"path/filepath"
+	"time"
+
 	"github.com/mitchellh/go-homedir"
 )
 
@@ -112,7 +113,7 @@ type RestoreOptions struct {
 	Name      string
 	Archive   bool
 	Verbose   bool
-	Trial   bool
+	Trial     bool
 }
 
 func (env *GoEnvCmd) Restore(options *RestoreOptions) error {
