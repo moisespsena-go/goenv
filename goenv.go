@@ -16,9 +16,9 @@ package goenv
 
 import (
 	"fmt"
-	"path/filepath"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"time"
 )
 
