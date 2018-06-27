@@ -15,10 +15,11 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
-	"github.com/moisespsena/go-goenv"
 	"fmt"
 	"strings"
+
+	"github.com/moisespsena/go-goenv"
+	"github.com/spf13/cobra"
 )
 
 // activateCmd represents the activate command
@@ -38,7 +39,7 @@ var versionsAvailableCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		for _, v := range  items {
+		for _, v := range items {
 			fmt.Println(pad(v.Title), v.DownloadUrl)
 		}
 		return nil
