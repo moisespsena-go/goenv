@@ -19,7 +19,6 @@ import (
 	"os"
 )
 
-// completionCmd represents the completion command
 var completionCmd = &cobra.Command{
 	Use:   "completion",
 	Short: "Generates bash completion scripts",

@@ -38,6 +38,7 @@ Usage:
 Available Commands:
   activate    Activate the virtualenv with NAME.
   backup      Create backup .tar.gz file for the virtualenv with have NAME.
+  completion  Generates bash completion scripts
   db          Returns the current database path.
   help        Help about any command
   init        Init new virtual enviroment.
@@ -46,6 +47,7 @@ Available Commands:
   rm          Remove the virtualenv with have NAME.
   setup       Generate sources for custom prompt commands.
   update      Update activation scripts.
+  versions    Manage golang binary versions
 
 Flags:
   -d, --db string   Database directory (default is $HOME/.goenv). (default "~/.goenv")

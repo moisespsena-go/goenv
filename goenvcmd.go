@@ -84,7 +84,7 @@ func (cmd *GoEnvCmd) Init(names ...string) (err error) {
 	for _, name := range names {
 		pth = filepath.Join(cmd.env.DbDir, name)
 		fmt.Fprintf(os.Stdout, "Initializing virtual enviroment %q on %q...\n", name, pth)
-		err = cmd.env.Init(name)
+		err = cmd.env.Init(name, "")
 		if err != nil {
 			return
 		}
@@ -113,7 +113,7 @@ func (cmd *GoEnvCmd) Update(envs []string) error {
 		if err != nil {
 			return err
 		}
-		err = cmd.env.Init(envName)
+		err = cmd.env.Init(envName, "")
 		if err != nil {
 			return err
 		}
@@ -127,7 +127,7 @@ func (cmd *GoEnvCmd) UpdateAll() error {
 		return err
 	}
 	for _, envName := range envs {
-		err = cmd.env.Init(envName)
+		err = cmd.env.Init(envName, "")
 		if err != nil {
 			return err
 		}

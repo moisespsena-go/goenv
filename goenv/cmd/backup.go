@@ -20,7 +20,6 @@ import (
 	"os"
 )
 
-// rmCmd represents the rm command
 var backupCmd = &cobra.Command{
 	Use:   "backup NAME [DEST]",
 	Short: "Create backup .tar.gz file for the virtualenv with have NAME.",

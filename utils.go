@@ -18,8 +18,6 @@ import (
 	"path/filepath"
 	"os"
 	"fmt"
-	"github.com/phayes/permbits"
-	"io/ioutil"
 	"time"
 )
 
@@ -83,31 +81,15 @@ func MkdirAll(pth ...string) error {
 	return fmt.Errorf("'%v': Invalid path.", p)
 }
 
-func createActivate(pth string) error {
-	perms, err := permbits.Stat(pth)
-	if err != nil {
-		return err
-	}
-	perms.SetGroupExecute(false)
-	perms.SetUserExecute(false)
-	perms.SetOtherExecute(false)
-	p := filepath.Join(pth, "activate")
-	err = ioutil.WriteFile(p, []byte(activateData), os.FileMode(perms))
-	if err != nil {
-		return fmt.Errorf("Create file %q failed: %v", p, err)
-	}
-	return nil
-}
-
 func TimeString(t time.Time) string {
 	return fmt.Sprintf("%04d%02d%02d%02d%02d%02d%v", t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(),
 		t.Second(), t.Nanosecond())
 }
 
 const activateData = `
-export GOPATH="$(cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd)"
+export GOPATH="$GOENVROOT/$GOENVNAME"
 export OLDPS1=$PS1
-export PS1="[go:$(basename $GOPATH)] $PS1"
+export PS1="[go:$GOENVNAME $PS1"
 export OLDPATH="$PATH"
 export PATH="$GOPATH/bin:$PATH"
 alias gcd="cd $GOPATH"

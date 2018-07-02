@@ -15,6 +15,10 @@
 package cmd
 
 import (
+	"fmt"
+
+	"github.com/moisespsena/go-error-wrap"
+	"github.com/moisespsena/go-goenv"
 	"github.com/spf13/cobra"
 )
 
@@ -23,6 +27,33 @@ var versionsCmd = &cobra.Command{
 	Use:   "versions",
 	Short: "Manage golang binary versions",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		env, err := goenv.NewGoEnv(db, false)
+		if err != nil {
+			return errwrap.Wrap(err, "New Env")
+		}
+
+		v := goenv.NewGoVersions(env)
+		items, err := v.Ls()
+
+		system, err := goenv.GetSystemGoVersion()
+		if err != nil {
+			return err
+		}
+		if system != nil {
+			items = append([]*goenv.GoVersion{system}, items...)
+		}
+		if err != nil {
+			return err
+		}
+		fmt.Println(pad("Name"), pad("Version"), "Root")
+		for _, v := range items {
+			name := v.Name
+			if v.System {
+				name = "sys"
+			}
+
+			fmt.Println(pad(name), pad(v.Name), v.Root)
+		}
 		return nil
 	},
 }

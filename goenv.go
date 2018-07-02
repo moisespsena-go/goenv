@@ -20,6 +20,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"github.com/phayes/permbits"
 )
 
 type GoEnv struct {
@@ -37,7 +38,7 @@ func NewGoEnv(dbDir string, check bool) (env *GoEnv, err error) {
 	return &GoEnv{dbDir}, nil
 }
 
-func (env *GoEnv) Init(name string) (err error) {
+func (env *GoEnv) Init(name, goroot string) (err error) {
 	var ok bool
 	pth := filepath.Join(env.DbDir, name)
 	ok, err = IsDir(pth, "src")
@@ -55,7 +56,7 @@ func (env *GoEnv) Init(name string) (err error) {
 		return err
 	}
 
-	err = createActivate(pth)
+	err = env.CreateActivate(pth, "")
 	if err != nil {
 		return err
 	}
@@ -166,4 +167,37 @@ func (env *GoEnv) Rm(name string, delete bool) (string, error) {
 		return "", err
 	}
 	return newPth, nil
+}
+
+func (env *GoEnv) SetGoVersion(envName, goRoot string) error {
+	pth, err := env.GetPath(envName, true)
+	if err != nil {
+		return err
+	}
+	return env.CreateActivate(pth, goRoot)
+}
+
+func (env *GoEnv) CreateActivate(pth, goRoot string) error {
+	perms, err := permbits.Stat(pth)
+	if err != nil {
+		return err
+	}
+	perms.SetGroupExecute(false)
+	perms.SetUserExecute(false)
+	perms.SetOtherExecute(false)
+
+	var data = fmt.Sprintf("export GOENVROOT=$(goenv db)\nexport GOENVNAME=%q\n", filepath.Base(pth))
+
+	if goRoot != "" {
+		data += fmt.Sprintf("export GOROOT=%q\nexport PATH=\"$GOROOT/bin:$PATH\"\n", goRoot)
+	}
+
+	data += activateData
+
+	p := filepath.Join(pth, "activate")
+	err = ioutil.WriteFile(p, []byte(data), os.FileMode(perms))
+	if err != nil {
+		return fmt.Errorf("Create file %q failed: %v", p, err)
+	}
+	return nil
 }

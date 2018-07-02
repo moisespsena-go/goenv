@@ -15,43 +15,27 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/moisespsena/go-error-wrap"
 	"github.com/moisespsena/go-goenv"
 	"github.com/spf13/cobra"
 )
 
 // activateCmd represents the activate command
-var versionsAvailableCmd = &cobra.Command{
-	Use:   "available [TERM...]",
-	Short: "List all available GoLang versions",
-	Long: `List all available GoLang versions
-The TERM is Glob (https://github.com/gobwas/glob) expression.
-
-Examples:
-  $ goenv available
-  $ goenv available 1.1*
-`,
+var versionsInstallCmd = &cobra.Command{
+	Use:   "install VERSION...",
+	Args:  cobra.MinimumNArgs(1),
+	Short: "Install one or more GoLang versions and save files into $GOENVROOT/.versions dir",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		env, err := goenv.NewGoEnv(db, false)
 		if err != nil {
 			return errwrap.Wrap(err, "New Env")
 		}
 		v := goenv.NewGoVersions(env)
-		items, err := v.Available(args...)
-		if err != nil {
-			return err
-		}
-		fmt.Println(pad("Name"), pad("URL", 55), "Root")
-
-		for _, v := range items {
-			fmt.Println(pad(v.Name), pad(v.DownloadUrl(), 55), v.Root)
-		}
-		return nil
+		_, err = v.Install(args...)
+		return err
 	},
 }
 
 func init() {
-	versionsCmd.AddCommand(versionsAvailableCmd)
+	versionsCmd.AddCommand(versionsInstallCmd)
 }

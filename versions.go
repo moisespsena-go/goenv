@@ -12,52 +12,358 @@ import (
 	"strings"
 	"time"
 
+	"os"
+	"path/filepath"
+
+	"unicode"
+
+	"github.com/cavaliercoder/grab"
+	"github.com/dustin/go-humanize"
+	"github.com/gobwas/glob"
 	"github.com/moisespsena/go-error-wrap"
 )
+
+const VERSIONS_BASENAME = ".goversions"
 
 var versionRe, _ = regexp.Compile(`\D(\d+)`)
 var versionRe2, _ = regexp.Compile(`^(\D+)\d.*$`)
 
-type GoVersion struct {
-	Title string
-	//UpdatedAt time.Time
-	key         string
-	DownloadUrl string
+type GoBinVersion struct {
+	Version string
+	OsInfo  string
 }
 
+func NewGoBinVersion(binName string) (*GoBinVersion, error) {
+	ew := func(child error, self interface{}, args ...interface{}) error {
+		return errwrap.Wrap(errwrap.Wrap(child, self, args...), "GoBinVersion of %q", binName)
+	}
+	cmd := exec.Command(binName, "version")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Start()
+	if err != nil {
+		return nil, ew(err, "Cmd Start")
+	}
+	err = cmd.Wait()
+	if err != nil {
+		return nil, ew(err, "Cmd Wait")
+	}
+	parts := strings.Split(strings.TrimSpace(out.String()), " ")
+	osinfo := strings.Replace(parts[len(parts)-1], "/", "-", 1)
+	return &GoBinVersion{parts[2], osinfo}, nil
+}
+
+func GetSystemGoVersion() (*GoVersion, error) {
+	goroot := os.Getenv("GOROOT")
+	if goroot == "" {
+		var pth string
+		for _, p := range strings.Split(os.Getenv("PATH"), string(filepath.ListSeparator)) {
+			p = strings.TrimSpace(p)
+			if p == "" {
+				continue
+			}
+			pth = filepath.Join(p, "go")
+			_, err := os.Stat(pth)
+			if err != nil {
+				if os.IsNotExist(err) {
+					continue
+				}
+				return nil, errwrap.Wrap(err, "Get Stat of %q", pth)
+			}
+			absPath, err := filepath.Abs(p)
+			if err != nil {
+				return nil, errwrap.Wrap(err, "Get Abs Path of %q", p)
+			}
+			goroot = filepath.Dir(absPath)
+			break
+		}
+	}
+
+	if goroot != "" {
+		v, err := NewGoVersion(goroot)
+		if v != nil {
+			v.System = true
+		}
+		return v, err
+	}
+	return nil, nil
+}
+
+type GoVersion struct {
+	versions     *GoVersions
+	Name, Title  string
+	UpdatedAt    time.Time
+	key          string
+	downloadUrl  string
+	Installed    bool
+	Root         string
+	System       bool
+	BinVersion   *GoBinVersion
+	downloadPath string
+}
+
+func NewGoVersion(goroot string) (v *GoVersion, err error) {
+	pth := filepath.Join(goroot, "bin", "go")
+	binVersion, err := NewGoBinVersion(pth)
+	if err != nil {
+		return nil, err
+	}
+	return &GoVersion{Root: goroot, Name: binVersion.Version, BinVersion: binVersion}, nil
+}
+func (v *GoVersion) DownloadPath() string {
+	if v.downloadPath == "" {
+		v.downloadPath = filepath.Join(v.versions.Dir(), filepath.Base(v.DownloadUrl()))
+	}
+	return v.downloadPath
+}
+func (v *GoVersion) Downloadable(client *http.Client) (bool, error) {
+	r, err := client.Head(v.DownloadUrl())
+	defer r.Body.Close()
+	if err == nil && r.StatusCode == 200 {
+		return true, nil
+	}
+	return false, errwrap.Wrap(err, "HTTP HEAD %q", v.downloadUrl)
+}
+
+func (v *GoVersion) DownloadUrl() string {
+	if v.downloadUrl == "" {
+		v.downloadUrl = "https://dl.google.com/go/" + v.Name + "." + v.BinVersion.OsInfo + ".tar.gz"
+	}
+	return v.downloadUrl
+}
 func (v *GoVersion) Key() string {
 	if v.key == "" {
-		r := versionRe.FindAllString(v.Title, 4)
+		r := versionRe.FindAllString(v.Name, 4)
 		for i, v := range r {
 			iv, _ := strconv.Atoi(v[1:])
 			r[i] = fmt.Sprintf("%05d", iv)
 		}
-		v.key = strings.ToLower(versionRe2.ReplaceAllString(v.Title, "$1")) + "-" + strings.Join(r, "")
+		v.key = versionRe2.ReplaceAllString(v.Name, "$1") + "-" + strings.Join(r, "")
 	}
 	return v.key
 }
 
 type GoVersions struct {
+	Env *GoEnv
 }
 
-func (v *GoVersions) Available() ([]*GoVersion, error) {
-	cmd := exec.Command("go", "version")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Start()
+func NewGoVersions(env *GoEnv) *GoVersions {
+	return &GoVersions{env}
+}
+
+func (v *GoVersions) Dir() string {
+	return filepath.Join(v.Env.DbDir, VERSIONS_BASENAME)
+}
+
+func (v *GoVersions) DirExists() (pth string, exists bool, err error) {
+	pth = v.Dir()
+	s, err := os.Stat(pth)
 	if err != nil {
-		return nil, errwrap.Wrap(err, "Cmd.Start: Get current go version")
+		if os.IsNotExist(err) {
+			return pth, false, nil
+		}
+		return "", false, errwrap.Wrap(err, "file stat")
 	}
-	err = cmd.Wait()
+	if !s.IsDir() {
+		return "", false, fmt.Errorf("%q is not a directory.", pth)
+	}
+	return pth, true, err
+}
+
+func (v *GoVersions) Ls() (vs []*GoVersion, err error) {
+	dir, exists, err := v.DirExists()
 	if err != nil {
-		return nil, errwrap.Wrap(err, "Cmd.Wait: Get current go version")
+		return nil, err
 	}
-	parts := strings.Split(strings.TrimSpace(out.String()), " ")
-	osinfo := strings.Replace(parts[len(parts)-1], "/", "-", 1)
+	if exists {
+		s, err := os.Open(dir)
+		if err != nil {
+			return nil, errwrap.Wrap(err, "Open %q", dir)
+		}
+		items, err := s.Readdir(-1)
+		if err != nil {
+			return nil, errwrap.Wrap(err, "Readdir %q", dir)
+		}
+		for _, f := range items {
+			if f.IsDir() {
+				pth := filepath.Join(dir, f.Name())
+				version, err := NewGoVersion(pth)
+				if version != nil {
+					version.Name = f.Name()
+					version.versions = v
+					if err != nil {
+						return nil, errwrap.Wrap(err, "Parse Version of %q", pth)
+					}
+					vs = append(vs, version)
+				}
+			}
+		}
+	}
+	return
+}
+
+func (v *GoVersions) Set(versionName, envName string) (err error) {
+	system, err := GetSystemGoVersion()
+	if err != nil {
+		return err
+	}
+	if system == nil {
+		return errwrap.Wrap(err, "GO isn't available on system. Please install it from https://golang.org/dl")
+	}
+
+	if versionName == "sys" {
+		err = v.Env.SetGoVersion(versionName, "")
+	} else {
+		versionName = strings.ToLower(versionName)
+		versions, err := v.Ls()
+		if err != nil {
+			return errwrap.Wrap(err, "Get installed versions")
+		}
+
+		var version *GoVersion
+
+		for _, ver := range versions {
+			if ver.Name == versionName {
+				version = ver
+				break
+			}
+		}
+
+		if version == nil {
+			return fmt.Errorf("GoLang version %q has not be installed", versionName)
+		}
+
+		err = v.Env.SetGoVersion(envName, filepath.Join("$GOENVROOT", VERSIONS_BASENAME, version.Name))
+	}
+	return errwrap.Wrap(err, "Env Set Go Version")
+}
+
+func (v *GoVersions) Download(names ...string) (versions []*GoVersion, err error) {
+	if len(names) == 0 {
+		return
+	}
+	gopath := os.Getenv("GOPATH")
+	if gopath == "" {
+		return nil, errwrap.Wrap(err, "GOPATH enviromente variable isn't defined.")
+	}
+
+	dir, exists, err := v.DirExists()
+	if err != nil {
+		return nil, err
+	}
+
+	versions, err = v.Available(names...)
+	if err != nil {
+		return nil, err
+	}
+
+	if !exists {
+		err = os.MkdirAll(dir, 0777)
+		if err != nil {
+			return nil, errwrap.Wrap(err, "Create versions directory.")
+		}
+	}
+
+	// create client
+	client := grab.NewClient()
+
+	l := len(versions)
+	resp := make([]*grab.Response, len(versions))
+
+	hb := func(value int64) string {
+		return humanize.Bytes(uint64(value)) + " (" + strconv.Itoa(int(value)) + " bytes)"
+	}
+
+	for i, v := range versions {
+		v.Root = filepath.Join(dir, v.Name)
+		req, _ := grab.NewRequest(v.DownloadPath(), v.DownloadUrl())
+		fmt.Printf("[%v] Downloading %v... ", v.Name, req.URL())
+		resp[i] = client.Do(req)
+		fmt.Printf("[HTTP %v]", resp[i].HTTPResponse.Status)
+		switch resp[i].HTTPResponse.StatusCode {
+		case 200, 206:
+			fmt.Printf(" Left Size: %v", hb(resp[i].HTTPResponse.ContentLength))
+		}
+		fmt.Println()
+	}
+
+	var dok []*GoVersion
+	t := time.NewTicker(2 * time.Second)
+	defer t.Stop()
+
+	for l > 0 {
+		<-t.C
+		for i, r := range resp {
+			if r == nil {
+				continue
+			}
+			select {
+			case <-r.Done:
+				resp[i] = nil
+				l--
+
+				// check for errors
+				if r.Err(); err != nil {
+					fmt.Fprintf(os.Stderr, "[%v] Download failed: %v\n", versions[i].Name, err)
+				} else {
+					dok = append(dok, versions[i])
+					fmt.Printf("[%v] Download saved to %v\n", versions[i].Name, r.Filename)
+				}
+			default:
+				fmt.Printf("[%v] transferred %v / %v (%.2f%%)\n",
+					versions[i].Name, hb(r.BytesComplete()), hb(r.Size), 100*r.Progress())
+			}
+		}
+	}
+	return dok, nil
+}
+
+func (vs *GoVersions) Install(names ...string) (versions []*GoVersion, err error) {
+	versions, err = vs.Download(names...)
+	if err != nil {
+		return
+	}
+	for _, v := range versions {
+		_, err = os.Stat(v.Root)
+		if err == nil || !os.IsNotExist(err) {
+			err = os.RemoveAll(v.Root)
+			if err != nil {
+				return nil, errwrap.Wrap(err, "Remove %q", v.Root)
+			}
+		} else if !os.IsNotExist(err) {
+			return nil, errwrap.Wrap(err, "Stat of %q", v.Root)
+		}
+		f, err := os.Open(v.DownloadPath())
+		if err != nil {
+			return nil, errwrap.Wrap(err, "Open %q", v.downloadPath)
+		}
+		bkp, err := NewBackupReader(f, false)
+		if err != nil {
+			return nil, errwrap.Wrap(err, "Reader %q", v.downloadPath)
+		}
+		fmt.Printf("[%v] Extract %q to %q...", v.Name, v.downloadPath, v.Root)
+
+		err = bkp.Extract(v.Name, vs.Dir(), ExtractOptions(0))
+		fmt.Println(" Done.")
+		if err != nil {
+			return nil, errwrap.Wrap(err, "Extract %q", v.downloadPath)
+		}
+	}
+	return
+}
+
+func (v *GoVersions) Available(terms ...string) ([]*GoVersion, error) {
+	system, err := GetSystemGoVersion()
+	if err != nil {
+		return nil, err
+	}
+	if system == nil {
+		return nil, errwrap.Wrap(err, "GO isn't available on system. Please install it from https://golang.org/dl")
+	}
 
 	r, err := http.Get("https://api.github.com/repos/golang/go/milestones?sort=title&order=desc&state=closed")
 	if err != nil {
-		return nil, errwrap.Wrap(err, "Request")
+		return nil, errwrap.Wrap(err, "Get Milestones from %q", r.Request.URL)
 	}
 	defer r.Body.Close()
 	d := json.NewDecoder(r.Body)
@@ -74,13 +380,39 @@ func (v *GoVersions) Available() ([]*GoVersion, error) {
 
 	var newVersions []*GoVersion
 
-	for _, v := range versions {
-		v.DownloadUrl = "https://dl.google.com/go/" + strings.ToLower(v.Title) + "." + osinfo + ".tar.gz"
-		r, err = client.Head(v.DownloadUrl)
-		if err == nil && r.StatusCode == 200 {
-			newVersions = append(newVersions, v)
+	if len(terms) > 0 {
+		for _, term := range terms {
+			if unicode.IsDigit(rune(term[0])) {
+				term = "go" + term
+			}
+			g := glob.MustCompile(strings.ToLower(term))
+
+			for _, v := range versions {
+				if g.Match(strings.ToLower(v.Title)) {
+					newVersions = append(newVersions, v)
+				}
+			}
 		}
-		r.Body.Close()
+
+		versions = newVersions
+		newVersions = make([]*GoVersion, 0)
+	}
+
+	for _, ver := range versions {
+		ver.BinVersion = system.BinVersion
+		ver.Name = strings.ToLower(ver.Title)
+		ok, err := ver.Downloadable(client)
+		if err != nil {
+			return nil, errwrap.Wrap(err, "Validate DownloadURL")
+		}
+		if ok {
+			ver.versions = v
+			root := filepath.Join(v.Dir(), ver.Name)
+			if _, err := os.Stat(root); err == nil {
+				ver.Root = root
+			}
+			newVersions = append(newVersions, ver)
+		}
 	}
 
 	versions = newVersions

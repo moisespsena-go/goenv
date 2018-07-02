@@ -19,7 +19,6 @@ import (
 	"github.com/moisespsena/go-goenv"
 )
 
-// initCmd represents the init command
 var initCmd = &cobra.Command{
 	Use:   "init NAME...",
 	Short: "Init new virtual enviroment.",

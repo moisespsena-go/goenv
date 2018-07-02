@@ -19,7 +19,6 @@ import (
 	"os"
 )
 
-// dbCmd represents the db command
 var dbCmd = &cobra.Command{
 	Use:   "db",
 	Short: "Returns the current database path.",
