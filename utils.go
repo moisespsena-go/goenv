@@ -100,6 +100,6 @@ goenv-deactivate() {
 	unset OLDPS1
 	unset OLDPATH
 	unalias gcd
-	unset goenv-deactivate
+	unset -f goenv-deactivate
 }
 `
