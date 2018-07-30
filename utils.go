@@ -15,9 +15,9 @@
 package goenv
 
 import (
-	"path/filepath"
-	"os"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -89,7 +89,7 @@ func TimeString(t time.Time) string {
 const activateData = `
 export GOPATH="$GOENVROOT/$GOENVNAME"
 export OLDPS1=$PS1
-export PS1="[go:$GOENVNAME $PS1"
+export PS1="[go:$GOENVNAME] $PS1"
 export OLDPATH="$PATH"
 export PATH="$GOPATH/bin:$PATH"
 alias gcd="cd $GOPATH"
@@ -100,6 +100,6 @@ goenv-deactivate() {
 	unset OLDPS1
 	unset OLDPATH
 	unalias gcd
-	unset deactivate
+	unset goenv-deactivate
 }
 `

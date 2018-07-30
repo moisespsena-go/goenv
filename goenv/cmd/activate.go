@@ -15,11 +15,10 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
 	"github.com/moisespsena/go-goenv"
+	"github.com/spf13/cobra"
 )
 
-// activateCmd represents the activate command
 var activateCmd = &cobra.Command{
 	Use:   "activate NAME",
 	Short: "Activate the virtualenv with NAME.",

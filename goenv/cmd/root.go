@@ -18,13 +18,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/spf13/cobra"
 	"github.com/mitchellh/go-homedir"
+	"github.com/spf13/cobra"
 )
 
 var db string
 
-// rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "goenv",
 	Short: "Manage GoLang virtual enviroments.",

@@ -22,7 +22,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// activateCmd represents the activate command
 var versionsCmd = &cobra.Command{
 	Use:   "versions",
 	Short: "Manage golang binary versions",

@@ -22,7 +22,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// activateCmd represents the activate command
 var versionsGetCmd = &cobra.Command{
 	Use:   "get VERSION...",
 	Args:  cobra.MinimumNArgs(1),

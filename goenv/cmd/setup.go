@@ -15,11 +15,10 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
 	"github.com/moisespsena/go-goenv"
+	"github.com/spf13/cobra"
 )
 
-// activateCmd represents the activate command
 var setupCmd = &cobra.Command{
 	Use:   "setup",
 	Short: "Generate sources for custom prompt commands.",

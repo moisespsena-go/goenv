@@ -22,7 +22,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// activateCmd represents the activate command
 var versionsAvailableCmd = &cobra.Command{
 	Use:   "available [TERM...]",
 	Short: "List all available GoLang versions",

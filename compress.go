@@ -15,14 +15,15 @@
 package goenv
 
 import (
-	"time"
 	"archive/tar"
+	"compress/gzip"
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
-	"io"
-	"compress/gzip"
-	"fmt"
+	"time"
+
 	"github.com/dustin/go-humanize"
 )
 
@@ -218,7 +219,7 @@ func (b *BackupFile) Extract(rootName, target string, options ExtractOptions) er
 		if options.IsVerbose() {
 			prefix := pad(typeDesc[header.Typeflag], 5) + " "
 			switch header.Typeflag {
-			case tar.TypeReg,tar.TypeRegA:
+			case tar.TypeReg, tar.TypeRegA:
 				prefix += pad("["+humanize.Bytes(uint64(info.Size()))+"]", 12)
 			default:
 				prefix += pad("", 12)

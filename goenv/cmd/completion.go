@@ -1,4 +1,4 @@
-// Copyright © 2018 NAME HERE <EMAIL ADDRESS>
+// Copyright © 2018 Moises P. Sena <moisespsena@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
 var completionCmd = &cobra.Command{
@@ -32,7 +33,7 @@ To configure your bash shell to load completions for each session add to your ba
 . <(goenv completion)
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		rootCmd.GenBashCompletion(os.Stdout);
+		rootCmd.GenBashCompletion(os.Stdout)
 	},
 }
 

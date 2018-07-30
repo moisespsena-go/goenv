@@ -15,16 +15,15 @@
 package cmd
 
 import (
+	"github.com/moisespsena/go-error-wrap"
 	"github.com/moisespsena/go-goenv"
 	"github.com/spf13/cobra"
-	"github.com/moisespsena/go-error-wrap"
 )
 
-// activateCmd represents the activate command
 var versionsSetCmd = &cobra.Command{
 	Use:   "set VERSION ENV_NAME...",
 	Short: "Set version to env",
-	Args:cobra.MinimumNArgs(2),
+	Args:  cobra.MinimumNArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		env, err := goenv.NewGoEnv(db, false)
 		if err != nil {

@@ -89,11 +89,11 @@ func (cmd *GoEnvCmd) Init(names ...string) (err error) {
 			return
 		}
 		fmt.Fprintf(os.Stdout, `Activate it using:
-  $ goenv-activate ` + name + `
+  $ goenv-activate `+name+`
     or
   $ source '%v'
     or
-  $ eval $(%v activate ` + name + `)
+  $ eval $(%v activate `+name+`)
 
 `,
 			filepath.Join(pth, "activate"), os.Args[0])

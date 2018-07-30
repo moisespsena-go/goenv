@@ -15,9 +15,10 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
-	"github.com/moisespsena/go-goenv"
 	"os"
+
+	"github.com/moisespsena/go-goenv"
+	"github.com/spf13/cobra"
 )
 
 var backupCmd = &cobra.Command{

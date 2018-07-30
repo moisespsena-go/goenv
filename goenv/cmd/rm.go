@@ -15,11 +15,10 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
 	"github.com/moisespsena/go-goenv"
+	"github.com/spf13/cobra"
 )
 
-// rmCmd represents the rm command
 var rmCmd = &cobra.Command{
 	Use:   "rm NAME",
 	Short: "Remove the virtualenv with have NAME.",

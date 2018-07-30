@@ -15,12 +15,12 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
-	"github.com/moisespsena/go-goenv"
 	"os"
+
+	"github.com/moisespsena/go-goenv"
+	"github.com/spf13/cobra"
 )
 
-// restoreCmd represents the restore command
 var restoreCmd = &cobra.Command{
 	Use:   "restore [FLAG...] FILE",
 	Short: "Restore backup.tar.gz file to the virtualenv with have NAME.",
