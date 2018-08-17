@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
+	"github.com/moisespsena/go-error-wrap"
 )
 
 const (
@@ -191,10 +192,6 @@ func pad(v string, count int) string {
 	r := strings.Repeat(" ", count-len(v))
 	return v + r
 }
-func padl(v string, count int) string {
-	r := strings.Repeat(" ", count-len(v))
-	return r + v
-}
 
 var typeDesc = map[byte]string{
 	tar.TypeReg:           "F",
@@ -238,7 +235,7 @@ func (b *BackupFile) Extract(rootName, target string, options ExtractOptions) er
 					if err != nil {
 						os.Stdout.WriteString("failed.\n")
 					} else {
-						os.Stdout.WriteString("done.\n")
+						os.Stdout.WriteString(":done.\n")
 					}
 				}()
 			}
@@ -258,7 +255,7 @@ func (b *BackupFile) Extract(rootName, target string, options ExtractOptions) er
 
 		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
 		if err != nil {
-			return err
+			return errwrap.Wrap(err, path)
 		}
 
 		defer func() {
@@ -277,6 +274,6 @@ func (b *BackupFile) Extract(rootName, target string, options ExtractOptions) er
 		}()
 		_, err = io.Copy(file, reader)
 
-		return err
+		return errwrap.Wrap(err, path)
 	})
 }
