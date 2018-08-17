@@ -48,9 +48,6 @@ var pathCmd = &cobra.Command{
 			if _, err = os.Stdout.WriteString(pth + "\n"); err != nil {
 				return err
 			}
-			if err = os.Stdout.Sync(); err != nil {
-				return err
-			}
 		}
 
 		return nil
