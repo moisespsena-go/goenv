@@ -21,7 +21,7 @@ import (
 )
 
 type GoEnvCmd struct {
-	env *GoEnv
+	Env *GoEnv
 }
 
 func NewGoEnvCmd(dbDir string, check bool) (envCmd *GoEnvCmd, err error) {
@@ -58,13 +58,13 @@ goenv-die () {
 }
 
 func (cmd *GoEnvCmd) Ls() error {
-	names, err := cmd.env.Ls()
+	names, err := cmd.Env.Ls()
 	if err != nil {
 		return err
 	}
 
 	if len(names) == 0 {
-		fmt.Fprintf(os.Stderr, "'%v': Database directory is empty.", cmd.env.DbDir)
+		fmt.Fprintf(os.Stderr, "'%v': Database directory is empty.", cmd.Env.DbDir)
 	} else {
 		for _, name := range names {
 			os.Stdout.WriteString(name + "\n")
@@ -82,9 +82,9 @@ func (cmd *GoEnvCmd) Init(names ...string) (err error) {
 	var pth string
 
 	for _, name := range names {
-		pth = filepath.Join(cmd.env.DbDir, name)
+		pth = filepath.Join(cmd.Env.DbDir, name)
 		fmt.Fprintf(os.Stdout, "Initializing virtual enviroment %q on %q...\n", name, pth)
-		err = cmd.env.Init(name, "")
+		err = cmd.Env.Init(name, "")
 		if err != nil {
 			return
 		}
@@ -109,11 +109,11 @@ func (cmd *GoEnvCmd) Update(envs []string) error {
 		return fmt.Errorf("No enviroments names informed.")
 	}
 	for _, envName := range envs {
-		_, err := cmd.env.GetPath(envName, false)
+		_, err := cmd.Env.GetPath(envName, false)
 		if err != nil {
 			return err
 		}
-		err = cmd.env.Init(envName, "")
+		err = cmd.Env.Init(envName, "")
 		if err != nil {
 			return err
 		}
@@ -122,12 +122,12 @@ func (cmd *GoEnvCmd) Update(envs []string) error {
 }
 
 func (cmd *GoEnvCmd) UpdateAll() error {
-	envs, err := cmd.env.Ls()
+	envs, err := cmd.Env.Ls()
 	if err != nil {
 		return err
 	}
 	for _, envName := range envs {
-		err = cmd.env.Init(envName, "")
+		err = cmd.Env.Init(envName, "")
 		if err != nil {
 			return err
 		}
@@ -136,7 +136,7 @@ func (cmd *GoEnvCmd) UpdateAll() error {
 }
 
 func (cmd *GoEnvCmd) ActivateCode(name string) error {
-	code, err := cmd.env.ActivateCode(name)
+	code, err := cmd.Env.ActivateCode(name)
 	if err != nil {
 		return err
 	}
@@ -146,15 +146,15 @@ func (cmd *GoEnvCmd) ActivateCode(name string) error {
 }
 
 func (cmd *GoEnvCmd) Rm(name string, delete bool) error {
-	pth, err := cmd.env.Rm(name, delete)
+	pth, err := cmd.Env.Rm(name, delete)
 	if err != nil {
 		return err
 	}
 	if delete {
-		fmt.Fprintf(os.Stdout, "GoLang Enviroment %q [%v] removed.\n", name, filepath.Join(cmd.env.DbDir, name))
+		fmt.Fprintf(os.Stdout, "GoLang Enviroment %q [%v] removed.\n", name, filepath.Join(cmd.Env.DbDir, name))
 		return nil
 	}
-	fmt.Fprintf(os.Stdout, "GoLang Enviroment %q moved from %q to %q\n", name, filepath.Join(cmd.env.DbDir, name),
+	fmt.Fprintf(os.Stdout, "GoLang Enviroment %q moved from %q to %q\n", name, filepath.Join(cmd.Env.DbDir, name),
 		pth)
 	os.Stdout.Sync()
 	return nil

@@ -16,8 +16,12 @@ package goenv
 
 import (
 	"fmt"
+	"github.com/moisespsena/go-error-wrap"
+	"github.com/moisespsena/go-ioutil"
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -84,6 +88,34 @@ func MkdirAll(pth ...string) error {
 func TimeString(t time.Time) string {
 	return fmt.Sprintf("%04d%02d%02d%02d%02d%02d%v", t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(),
 		t.Second(), t.Nanosecond())
+}
+
+func readLines(pth string) ([]string, error) {
+	f, err := os.Open(pth)
+	if err != nil {
+		return nil, errwrap.Wrap(err, "Open %q", pth)
+	}
+	defer f.Close()
+
+	var (
+		lines []string
+		line  []byte
+	)
+	i := 0
+	for err == nil {
+		i++
+		line, err = ioutil.ReadLine(f)
+		if err == nil {
+			if line[len(line)-1] == '\r' {
+				line = line[0 : len(line)-1]
+			}
+			lines = append(lines, strings.TrimSpace(string(line)))
+		}
+	}
+	if err != nil && err != io.EOF {
+		return nil, errwrap.Wrap(err, "Read Line %d", i)
+	}
+	return lines, nil
 }
 
 const activateData = `

@@ -14,7 +14,9 @@
 
 package cmd
 
-import "strings"
+import (
+	"strings"
+)
 
 func pad(v string, s ...int) string {
 	l := 10

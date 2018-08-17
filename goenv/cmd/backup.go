@@ -17,6 +17,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/moisespsena/go-error-wrap"
 	"github.com/moisespsena/go-goenv"
 	"github.com/spf13/cobra"
 )
@@ -31,6 +32,17 @@ Examples:
   backup to stdout:
 
   $ goenv backup teste -
+
+Exclude patterns from backup:
+  With Args:
+
+  $ goenv backup teste -e ".git" -e "node_modules" -e "*.swp"
+
+  Global:
+
+  $ ENV_PATH=$(goenv path teste)
+  $ mkdir $ENV_PATH/.goenv_settings
+  $ echo ".git\nnode_modules\n*.swp" > $ENV_PATH/.goenv_settings/backup_exclude
 `,
 	Args: func(cmd *cobra.Command, args []string) error {
 		err := cobra.MinimumNArgs(1)(cmd, args)
@@ -45,11 +57,18 @@ Examples:
 			return err
 		}
 
+		options := &goenv.BackupOptions{}
+		exclude, err := cmd.PersistentFlags().GetStringSlice("exclude")
 		if err != nil {
-			return err
+			return errwrap.Wrap(err, "Flag EXCLUDE")
 		}
 
-		options := &goenv.BackupOptions{}
+		if len(exclude) > 0 {
+			err = options.Patterns.Append(exclude...)
+			if err != nil {
+				return errwrap.Wrap(err, "Exclude patterns.")
+			}
+		}
 
 		if len(args) == 1 {
 			options.DefaultBackup = true
@@ -64,5 +83,7 @@ Examples:
 }
 
 func init() {
+	backupCmd.PersistentFlags().StringSliceP("exclude", "e", nil,
+		"Excludes using GLOB. See https://github.com/gobwas/glob for patthern help.")
 	rootCmd.AddCommand(backupCmd)
 }

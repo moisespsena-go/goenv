@@ -43,6 +43,7 @@ Available Commands:
   help        Help about any command
   init        Init new virtual enviroment.
   ls          List all virtual enviroments on current database.
+  path        Print env path
   restore     Restore backup.tar.gz file to the virtualenv with have NAME.
   rm          Remove the virtualenv with have NAME.
   setup       Generate sources for custom prompt commands.

@@ -53,7 +53,12 @@ type Header struct {
 	OS      byte      // operating system type
 }
 
-func compress(source string, writer io.Writer) error {
+func compress(source string, writer io.Writer, exclude ValidFunc) error {
+	if exclude == nil {
+		exclude = func(pth string, info os.FileInfo) bool {
+			return false
+		}
+	}
 	gzWriter := gzip.NewWriter(writer)
 	tarWriter := tar.NewWriter(gzWriter)
 	defer tarWriter.Close()
@@ -72,11 +77,17 @@ func compress(source string, writer io.Writer) error {
 	return filepath.Walk(source,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				return err
+				return errwrap.Wrap(err, "Start: %v", path)
+			}
+			if exclude(path, info) {
+				if info.IsDir() {
+					return filepath.SkipDir
+				}
+				return nil
 			}
 			header, err := tar.FileInfoHeader(info, info.Name())
 			if err != nil {
-				return err
+				return errwrap.Wrap(err, "Get FileInfoHeader: %v", path)
 			}
 
 			if baseDir != "" {
@@ -84,20 +95,34 @@ func compress(source string, writer io.Writer) error {
 			}
 
 			if err := tarWriter.WriteHeader(header); err != nil {
-				return err
+				return errwrap.Wrap(err, "Write Header: %v", path)
 			}
 
 			if info.IsDir() {
 				return nil
 			}
 
+			stat, err := os.Stat(path)
+			if err != nil {
+				return errwrap.Wrap(err, "Stat of %v", path)
+			}
+
+			if stat.Size() == 0 {
+				return nil
+			}
+
 			file, err := os.Open(path)
 			if err != nil {
-				return err
+				return errwrap.Wrap(err, "Open: %v", path)
 			}
+
+			if filepath.Base(path) == "acorn" {
+				println()
+			}
+
 			defer file.Close()
 			_, err = io.Copy(tarWriter, file)
-			return err
+			return errwrap.Wrap(err, "Copy: %v [%s]", path, humanize.Bytes(uint64(stat.Size())))
 		})
 }
 

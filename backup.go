@@ -21,17 +21,93 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/gobwas/glob"
 	"github.com/mitchellh/go-homedir"
+	"github.com/moisespsena/go-error-wrap"
 )
+
+type ValidFunc func(pth string, info os.FileInfo) bool
+
+type Patterns struct {
+	values []glob.Glob
+	m      map[string]bool
+}
+
+func (e *Patterns) Append(values ...string) (err error) {
+	var g glob.Glob
+	if e.m == nil {
+		e.m = map[string]bool{}
+	}
+
+	for i, value := range values {
+		if len(value) == 0 {
+			continue
+		}
+		if _, ok := e.m[value]; ok {
+			continue
+		}
+		if g, err = PathGlobCompile(value); err != nil {
+			return errwrap.Wrap(err, "Value %d: %q", i, value)
+		}
+
+		e.m[value] = true
+		e.values = append(e.values, g)
+	}
+	return nil
+}
+
+func (e *Patterns) Values() []glob.Glob {
+	return e.values
+}
+
+func (e *Patterns) ValidFunc() ValidFunc {
+	return func(pth string, info os.FileInfo) bool {
+		if len(e.values) == 0 {
+			return true
+		}
+		for _, g := range e.values {
+			if g.Match(pth) {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+func (e *Patterns) ExcludeFunc() ValidFunc {
+	return func(pth string, info os.FileInfo) bool {
+		if len(e.values) == 0 {
+			return false
+		}
+		for _, g := range e.values {
+			if g.Match(pth) {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+func Exclude(values ...string) (ValidFunc, error) {
+	p := &Patterns{}
+	if err := p.Append(values...); err != nil {
+		return nil, err
+	}
+	if len(p.values) == 0 {
+		return nil, nil
+	}
+	return p.ExcludeFunc(), nil
+}
 
 type BackupOptions struct {
 	Target        string
 	DefaultBackup bool
 	Writer        io.Writer
+	Patterns      Patterns
 }
 
 func (env *GoEnvCmd) Backup(name string, options *BackupOptions) error {
-	pth, err := env.env.Backup(name, options)
+	pth, err := env.Env.Backup(name, options)
 	if err != nil {
 		return fmt.Errorf("Backup for %q failed: %v", name, err)
 	}
@@ -64,13 +140,29 @@ func (env *GoEnv) Backup(name string, options *BackupOptions) (string, error) {
 		return "", err
 	}
 
+	excludeFile := filepath.Join(pth, ".goenv_settings", "backup_exclude")
+	ok, err := IsFile(excludeFile)
+	if err != nil {
+		return "", errwrap.Wrap(err, "Check file %q", excludeFile)
+	}
+	if ok {
+		exclude, err := readLines(excludeFile)
+		if err != nil {
+			return "", err
+		}
+		err = options.Patterns.Append(exclude...)
+		if err != nil {
+			return "", errwrap.Wrap(err, "Parse default exclude patterns in %q", excludeFile)
+		}
+	}
+
 	if options.Target != "" {
 		writer, err := os.Create(options.Target)
 		if err != nil {
 			return "", err
 		}
 		defer writer.Close()
-		err = compress(pth, writer)
+		err = compress(pth, writer, options.Patterns.ExcludeFunc())
 		return options.Target, err
 	}
 
@@ -94,12 +186,12 @@ func (env *GoEnv) Backup(name string, options *BackupOptions) (string, error) {
 			return "", err
 		}
 		defer writer.Close()
-		err = compress(pth, writer)
+		err = compress(pth, writer, options.Patterns.ExcludeFunc())
 		return target, err
 	}
 
 	if options.Writer != nil {
-		return "", compress(pth, options.Writer)
+		return "", compress(pth, options.Writer, options.Patterns.ExcludeFunc())
 	}
 
 	return "", fmt.Errorf("No target defined.")
@@ -117,7 +209,7 @@ type RestoreOptions struct {
 }
 
 func (env *GoEnvCmd) Restore(options *RestoreOptions) error {
-	pth, err := env.env.Restore(options)
+	pth, err := env.Env.Restore(options)
 	if err != nil {
 		return fmt.Errorf("Restore failed: %v", err)
 	}
