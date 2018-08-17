@@ -18,6 +18,7 @@ import (
 	"github.com/moisespsena/go-error-wrap"
 	"github.com/moisespsena/go-goenv"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 var pathCmd = &cobra.Command{
@@ -43,7 +44,13 @@ var pathCmd = &cobra.Command{
 			if err != nil {
 				return errwrap.Wrap(err, "Arg %d: %q", i, name)
 			}
-			println(pth)
+
+			if _, err = os.Stdout.WriteString(pth + "\n"); err != nil {
+				return err
+			}
+			if err = os.Stdout.Sync(); err != nil {
+				return err
+			}
 		}
 
 		return nil
