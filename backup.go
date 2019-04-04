@@ -23,7 +23,7 @@ import (
 
 	"github.com/gobwas/glob"
 	"github.com/mitchellh/go-homedir"
-	"github.com/moisespsena/go-error-wrap"
+	"github.com/moisespsena-go/error-wrap"
 )
 
 type ValidFunc func(pth string, info os.FileInfo) bool

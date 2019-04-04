@@ -14,7 +14,7 @@
 
 package main
 
-import "github.com/moisespsena/go-goenv/goenv/cmd"
+import "github.com/moisespsena-go/goenv/goenv/cmd"
 
 func main() {
 	cmd.Execute()

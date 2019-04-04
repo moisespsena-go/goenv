@@ -34,7 +34,7 @@ import (
 	"github.com/cavaliercoder/grab"
 	"github.com/dustin/go-humanize"
 	"github.com/gobwas/glob"
-	"github.com/moisespsena/go-error-wrap"
+	"github.com/moisespsena-go/error-wrap"
 )
 
 const VERSIONS_BASENAME = ".goversions"

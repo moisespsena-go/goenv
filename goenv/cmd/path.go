@@ -15,8 +15,8 @@
 package cmd
 
 import (
-	"github.com/moisespsena/go-error-wrap"
-	"github.com/moisespsena/go-goenv"
+	"github.com/moisespsena-go/error-wrap"
+	"github.com/moisespsena-go/goenv"
 	"github.com/spf13/cobra"
 	"os"
 )

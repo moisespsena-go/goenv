@@ -4,7 +4,7 @@ Manage GoLang virtual enviroments.
 ## Installation
 
 ```bash
-go get -u github.com/moisespsena/go-goenv/goenv
+go get -u github.com/moisespsena-go/goenv/goenv
 ```
 ### Check your $PATH enviroment variable
 
