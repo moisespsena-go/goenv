@@ -16,24 +16,24 @@ package goenv
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os/exec"
 	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+
+	"github.com/PuerkitoBio/goquery"
 
 	"os"
 	"path/filepath"
 
-	"unicode"
-
 	"github.com/cavaliercoder/grab"
 	"github.com/dustin/go-humanize"
-	"github.com/gobwas/glob"
 	"github.com/moisespsena-go/error-wrap"
 )
 
@@ -105,9 +105,9 @@ func GetSystemGoVersion() (*GoVersion, error) {
 
 type GoVersion struct {
 	versions     *GoVersions
-	Name, Title  string
+	ID           string
+	Name         string
 	UpdatedAt    time.Time
-	key          string
 	downloadUrl  string
 	Installed    bool
 	Root         string
@@ -140,21 +140,7 @@ func (v *GoVersion) Downloadable(client *http.Client) (bool, error) {
 }
 
 func (v *GoVersion) DownloadUrl() string {
-	if v.downloadUrl == "" {
-		v.downloadUrl = "https://dl.google.com/go/" + v.Name + "." + v.BinVersion.OsInfo + ".tar.gz"
-	}
 	return v.downloadUrl
-}
-func (v *GoVersion) Key() string {
-	if v.key == "" {
-		r := versionRe.FindAllString(v.Name, 4)
-		for i, v := range r {
-			iv, _ := strconv.Atoi(v[1:])
-			r[i] = fmt.Sprintf("%05d", iv)
-		}
-		v.key = versionRe2.ReplaceAllString(v.Name, "$1") + "-" + strings.Join(r, "")
-	}
-	return v.key
 }
 
 type GoVersions struct {
@@ -317,7 +303,7 @@ func (v *GoVersions) Download(names ...string) (versions []*GoVersion, err error
 				l--
 
 				// check for errors
-				if r.Err(); err != nil {
+				if err := r.Err(); err != nil {
 					fmt.Fprintf(os.Stderr, "[%v] Download failed: %v\n", versions[i].Name, err)
 				} else {
 					dok = append(dok, versions[i])
@@ -325,7 +311,7 @@ func (v *GoVersions) Download(names ...string) (versions []*GoVersion, err error
 				}
 			default:
 				fmt.Printf("[%v] transferred %v / %v (%.2f%%)\n",
-					versions[i].Name, hb(r.BytesComplete()), hb(r.Size), 100*r.Progress())
+					versions[i].Name, hb(r.BytesComplete()), hb(r.Size()), 100*r.Progress())
 			}
 		}
 	}
@@ -375,65 +361,82 @@ func (v *GoVersions) Available(terms ...string) ([]*GoVersion, error) {
 		return nil, errwrap.Wrap(err, "GO isn't available on system. Please install it from https://golang.org/dl")
 	}
 
-	r, err := http.Get("https://api.github.com/repos/golang/go/milestones?sort=title&order=desc&state=closed")
+	r, err := http.Get("https://golang.org/dl")
 	if err != nil {
 		return nil, errwrap.Wrap(err, "Get Milestones from %q", r.Request.URL)
 	}
 	defer r.Body.Close()
-	d := json.NewDecoder(r.Body)
+
+	// Load the HTML document
+	doc, err := goquery.NewDocumentFromReader(r.Body)
+	if err != nil {
+		return nil, errwrap.Wrap(err, "Decode go download page failed")
+	}
+
 	var versions []*GoVersion
-	if err = d.Decode(&versions); err != nil {
-		return nil, errwrap.Wrap(err, "JSON Decode")
-	}
 
-	tr := &http.Transport{
-		MaxIdleConnsPerHost: 1024,
-		TLSHandshakeTimeout: 0 * time.Second,
-	}
-	client := &http.Client{Transport: tr}
-
-	var newVersions []*GoVersion
-
-	if len(terms) > 0 {
-		for _, term := range terms {
-			if unicode.IsDigit(rune(term[0])) {
-				term = "go" + term
-			}
-			g := glob.MustCompile(strings.ToLower(term))
-
-			for _, v := range versions {
-				if g.Match(strings.ToLower(v.Title)) {
-					newVersions = append(newVersions, v)
+	var idre, _ = regexp.Compile(`^go\d+\.`)
+	// Find the review items
+	doc.Find("div").Each(func(i int, s *goquery.Selection) {
+		if name, _ := s.Attr("id"); idre.MatchString(name) {
+			s.Find("tbody tr").Each(func(i int, s *goquery.Selection) {
+				fileName := s.Find("td").Eq(0)
+				fileNameS := fileName.Text()
+				if !strings.HasSuffix(fileNameS, ".tar.gz") {
+					return
 				}
-			}
-		}
+				fileNameS = strings.TrimSuffix(fileNameS, ".tar.gz")
+				parts := strings.Split(strings.TrimPrefix(fileNameS, name+"."), "-")
+				if len(parts) != 2 {
+					return
+				}
+				if parts[0] != runtime.GOOS {
+					return
+				}
+				if parts[1] != runtime.GOARCH {
+					return
+				}
+				url, _ := fileName.Find("a").Attr("href")
+				if url == "" {
+					return
+				}
 
-		versions = newVersions
-		newVersions = make([]*GoVersion, 0)
-	}
+				ver := &GoVersion{
+					Name:        name,
+					ID:          sname(name),
+					downloadUrl: url,
+					versions:    v,
+				}
 
-	for _, ver := range versions {
-		ver.BinVersion = system.BinVersion
-		ver.Name = strings.ToLower(ver.Title)
-		ok, err := ver.Downloadable(client)
-		if err != nil {
-			return nil, errwrap.Wrap(err, "Validate DownloadURL")
-		}
-		if ok {
-			ver.versions = v
-			root := filepath.Join(v.Dir(), ver.Name)
-			if _, err := os.Stat(root); err == nil {
-				ver.Root = root
-			}
-			newVersions = append(newVersions, ver)
-		}
-	}
+				root := filepath.Join(v.Dir(), ver.Name)
+				if _, err := os.Stat(root); err == nil {
+					ver.Root = root
+				}
 
-	versions = newVersions
+				versions = append(versions, ver)
+			})
+		}
+	})
 
 	sort.Slice(versions, func(i, j int) bool {
-		return versions[i].Key() > versions[j].Key()
+		return versions[i].ID > versions[j].ID
 	})
 
 	return versions, nil
+}
+
+func sname(name string) (v string) {
+	parts := strings.Split(name[2:], ".")
+
+	for i, s := range parts {
+		for j, x := range s {
+			if !unicode.IsDigit(x) {
+				s = s[0:j]
+				break
+			}
+		}
+		si, _ := strconv.Atoi(s)
+		parts[i] = fmt.Sprintf("%04d", si)
+	}
+	return strings.Join(parts, "")
 }

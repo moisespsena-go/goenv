@@ -104,7 +104,7 @@ func readLines(pth string) ([]string, error) {
 	i := 0
 	for err == nil {
 		i++
-		line, err = ioutil.ReadLine(f)
+		line, err = iolr.ReadLine(f)
 		if err == nil {
 			if line[len(line)-1] == '\r' {
 				line = line[0 : len(line)-1]
