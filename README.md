@@ -46,7 +46,7 @@ goenv -h
 Output:
 
 ```
-Manage GoLang virtual enviroments.
+The virtual enviroments manager for Go!
 
 Usage:
   goenv [command]
@@ -64,6 +64,7 @@ Available Commands:
   rm          Remove the virtualenv with have NAME.
   setup       Generate sources for custom prompt commands.
   update      Update activation scripts.
+  version     Show program version
   versions    Manage golang binary versions
 
 Flags:

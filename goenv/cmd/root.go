@@ -26,7 +26,7 @@ var db string
 
 var rootCmd = &cobra.Command{
 	Use:   "goenv",
-	Short: "Manage GoLang virtual enviroments.",
+	Short: "The virtual enviroments manager for Go!",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
 		if db != "" {
 			db, err = homedir.Expand(db)

@@ -1,4 +1,4 @@
-// Copyright © 2018 Moises P. Sena <moisespsena@gmail.com>
+// Copyright © 2019 Moises P. Sena <moisespsena@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,33 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package cmd
 
 import (
-	"encoding/base64"
-	"strings"
+	"fmt"
+	"os"
 
-	"github.com/moisespsena-go/goenv/goenv/cmd"
+	"github.com/spf13/cobra"
 )
 
-var goversion, version, commit, date string
-
-func init() {
-	if strings.HasPrefix(goversion, "b64:") {
-		b, _ := base64.StdEncoding.DecodeString(goversion[4:])
-		goversion = string(b)
-	}
-
-	cmd.Version.Version,
-		cmd.Version.Commit,
-		cmd.Version.Date,
-		cmd.Version.GoVersion =
-		version,
-		commit,
-		date,
-		strings.TrimSpace(goversion)
+var Version struct {
+	Version, Commit, Date, GoVersion string
 }
 
-func main() {
-	cmd.Execute()
+// versionCmd represents the version command
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Show program version",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Fprintf(os.Stdout, "Version: %s\nCommit: %s\nDate: %s\nGo: %s\n",
+			Version.Version, Version.Commit, Version.Date, Version.GoVersion)
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(versionCmd)
 }
