@@ -3,10 +3,26 @@ The virtual enviroments manager for Go!.
 
 ## Installation
 
+### Get Binaries
+
+See to [RELEASES PAGE](./releases) and get your binary file for various operational systems and architecturies.
+
+NOTE: If gets alone binary, extract it (if archived) and PUT the directory into your PATH enviroment variable.
+
+Check your $PATH enviroment variable:
+
+```bash
+export PATH=/dir/of/my/goenv_binary:$PATH
+```
+
+### Build
+
+Get sources:
 ```bash
 go get -u github.com/moisespsena-go/goenv/goenv
 ```
-### Check your $PATH enviroment variable
+
+Check your $PATH enviroment variable:
 
 ```bash
 export PATH=$GOPATH/bin:$PATH
