@@ -1,5 +1,5 @@
 # GoEnv
-Manage GoLang virtual enviroments.
+The virtual enviroments manager for Go!.
 
 ## Installation
 

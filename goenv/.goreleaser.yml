@@ -1,0 +1,72 @@
+project_name: goenv
+
+before:
+  hooks:
+#    - go generate
+#    - go mod download
+
+builds:
+  - env:
+    ldflags:
+      - -s -w -X main.goversion={{.Env.GOVERSION}} -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{.Date}}
+
+    asmflags:
+      - all=-trimpath={{.Env.GOPATH}}
+
+    gcflags:
+      - all=-trimpath={{.Env.GOPATH}}
+
+    goos:
+      - linux
+     # - darwin
+      - windows
+
+    goarch:
+      - 386
+      - amd64
+      #- arm
+      #- arm64
+
+    goarm:
+      - 6
+      - 7
+
+archives:
+  - id: default
+    name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+    format_overrides:
+      - goos: windows
+        format: zip
+
+nfpms:
+  - name_template: '{{ .ProjectName }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    homepage:  https://github.com/moisespsena-go/goenv
+    description: 'The virtual enviroments manager for Go!'
+    maintainer: Moises P. Sena <moisespsena@gmail.com>
+    license: MIT
+    vendor: goenv
+    formats:
+      - deb
+      - rpm
+    dependencies:
+      - git
+    recommends:
+      - rpm
+
+snapshot:
+  name_template: "{{ .Tag }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - Merge pull request
+      - Merge branch

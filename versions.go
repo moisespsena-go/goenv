@@ -34,7 +34,7 @@ import (
 
 	"github.com/cavaliercoder/grab"
 	"github.com/dustin/go-humanize"
-	"github.com/moisespsena-go/error-wrap"
+	errwrap "github.com/moisespsena-go/error-wrap"
 )
 
 const VERSIONS_BASENAME = ".goversions"
@@ -311,7 +311,7 @@ func (v *GoVersions) Download(names ...string) (versions []*GoVersion, err error
 				}
 			default:
 				fmt.Printf("[%v] transferred %v / %v (%.2f%%)\n",
-					versions[i].Name, hb(r.BytesComplete()), hb(r.Size()), 100*r.Progress())
+					versions[i].Name, hb(r.BytesComplete()), hb(r.Size), 100*r.Progress())
 			}
 		}
 	}
