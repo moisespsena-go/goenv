@@ -23,7 +23,7 @@ import (
 )
 
 var versionsAvailableCmd = &cobra.Command{
-	Use:   "available [TERM...]",
+	Use:   "available [OPTIONS] [TERM...]",
 	Short: "List all available GoLang versions",
 	Long: `List all available GoLang versions
 The TERM is Glob (https://github.com/gobwas/glob) expression.
@@ -33,12 +33,13 @@ Examples:
   $ goenv available 1.1*
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		desc, _ := cmd.Flags().GetBool("rsort")
 		env, err := goenv.NewGoEnv(db, false)
 		if err != nil {
 			return errwrap.Wrap(err, "New Env")
 		}
 		v := goenv.NewGoVersions(env)
-		items, err := v.Available(args...)
+		items, err := v.Available(desc, args...)
 		if err != nil {
 			return err
 		}
@@ -52,5 +53,6 @@ Examples:
 }
 
 func init() {
+	versionsAvailableCmd.Flags().BoolP("rsort", "R", false, "sort results from news to olders")
 	versionsCmd.AddCommand(versionsAvailableCmd)
 }

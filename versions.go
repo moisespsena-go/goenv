@@ -27,6 +27,8 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/gobwas/glob"
+
 	"github.com/PuerkitoBio/goquery"
 
 	"os"
@@ -252,7 +254,7 @@ func (v *GoVersions) Download(names ...string) (versions []*GoVersion, err error
 		return nil, err
 	}
 
-	versions, err = v.Available(names...)
+	versions, err = v.Available(false, names...)
 	if err != nil {
 		return nil, err
 	}
@@ -352,7 +354,7 @@ func (vs *GoVersions) Install(names ...string) (versions []*GoVersion, err error
 	return
 }
 
-func (v *GoVersions) Available(terms ...string) ([]*GoVersion, error) {
+func (v *GoVersions) Available(desc bool, terms ...string) ([]*GoVersion, error) {
 	system, err := GetSystemGoVersion()
 	if err != nil {
 		return nil, err
@@ -373,8 +375,28 @@ func (v *GoVersions) Available(terms ...string) ([]*GoVersion, error) {
 		return nil, errwrap.Wrap(err, "Decode go download page failed")
 	}
 
-	var versions []*GoVersion
+	var accept = func(version string) (ok bool) { return true }
 
+	if len(terms) > 0 {
+		var cterms []glob.Glob
+		for _, term := range terms {
+			var cterm glob.Glob
+			if cterm, err = glob.Compile(strings.ToLower(term)); err != nil {
+				return nil, errwrap.Wrap(err, "Compile term %q failed", term)
+			}
+			cterms = append(cterms, cterm)
+		}
+		accept = func(version string) (ok bool) {
+			for _, term := range cterms {
+				if term.Match(version) {
+					return true
+				}
+			}
+			return false
+		}
+	}
+
+	var versions []*GoVersion
 	var idre, _ = regexp.Compile(`^go\d+\.`)
 	// Find the review items
 	doc.Find("div").Each(func(i int, s *goquery.Selection) {
@@ -401,6 +423,10 @@ func (v *GoVersions) Available(terms ...string) ([]*GoVersion, error) {
 					return
 				}
 
+				if !accept(name[2:]) {
+					return
+				}
+
 				ver := &GoVersion{
 					Name:        name,
 					ID:          sname(name),
@@ -418,9 +444,15 @@ func (v *GoVersions) Available(terms ...string) ([]*GoVersion, error) {
 		}
 	})
 
-	sort.Slice(versions, func(i, j int) bool {
-		return versions[i].ID > versions[j].ID
-	})
+	if desc {
+		sort.Slice(versions, func(i, j int) bool {
+			return versions[i].ID > versions[j].ID
+		})
+	} else {
+		sort.Slice(versions, func(i, j int) bool {
+			return versions[i].ID < versions[j].ID
+		})
+	}
 
 	return versions, nil
 }
