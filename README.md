@@ -5,7 +5,7 @@ The virtual enviroments manager for Go!.
 
 ### Get Binaries
 
-See to [RELEASES PAGE](./releases) and get your binary file for various operational systems and architecturies.
+See to [RELEASES PAGE](https://github.com/moisespsena-go/goenv) and get your binary file for various operational systems and architecturies.
 
 NOTE: If gets alone binary, extract it (if archived) and PUT the directory into your PATH enviroment variable.
 
